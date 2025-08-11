@@ -1,0 +1,130 @@
+/* Font settings */
+@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&family=Roboto:wght@300;400;500&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --background: 0 0% 98%;
+  --foreground: 20 14.3% 4.1%;
+  --muted: 60 4.8% 95.9%;
+  --muted-foreground: 25 5.3% 44.7%;
+  --popover: 0 0% 100%;
+  --popover-foreground: 20 14.3% 4.1%;
+  --card: 0 0% 100%;
+  --card-foreground: 20 14.3% 4.1%;
+  --border: 20 5.9% 90%;
+  --input: 20 5.9% 90%;
+  --primary: 142 69% 34%;  /* #1E8449 */
+  --primary-foreground: 211 100% 99%;
+  --secondary: 206 65% 40%;  /* #2874A6 */
+  --secondary-foreground: 0 0% 100%;
+  --accent: 39 89% 51%;  /* #F39C12 */
+  --accent-foreground: 24 9.8% 10%;
+  --destructive: 0 84.2% 60.2%;
+  --destructive-foreground: 60 9.1% 97.8%;
+  --ring: 20 14.3% 4.1%;
+  --radius: 0.5rem;
+  --chart-1: 142 69% 34%;  /* ProAce Primary Green */
+  --chart-2: 206 65% 40%;  /* ProAce Secondary Blue */
+  --chart-3: 39 89% 51%;  /* ProAce Accent Yellow/Orange */
+  --chart-4: 17 80% 50%;  /* Additional chart color */
+  --chart-5: 262 51% 47%;  /* Additional chart color */
+  --sidebar-background: 240 10% 3.9%;
+  --sidebar-foreground: 0 0% 98%;
+  --sidebar-primary: 142 69% 34%;
+  --sidebar-primary-foreground: 211 100% 99%;
+  --sidebar-accent: 39 89% 51%;
+  --sidebar-accent-foreground: 24 9.8% 10%;
+  --sidebar-border: 240 3.7% 15.9%;
+  --sidebar-ring: 240 4.9% 83.9%;
+  --success: 142 69% 42%;  /* #27AE60 */
+  --error: 6 78% 57%;  /* #E74C3C */
+  --warning: 39 89% 51%;  /* #F39C12 */
+  --info: 204 70% 53%;  /* #3498DB */
+}
+
+.dark {
+  --background: 240 10% 3.9%;
+  --foreground: 0 0% 98%;
+  --muted: 240 3.7% 15.9%;
+  --muted-foreground: 240 5% 64.9%;
+  --popover: 240 10% 3.9%;
+  --popover-foreground: 0 0% 98%;
+  --card: 240 10% 3.9%;
+  --card-foreground: 0 0% 98%;
+  --border: 240 3.7% 15.9%;
+  --input: 240 3.7% 15.9%;
+  --primary: 142 69% 48%;  /* #2ecc71 - lighter for dark mode */
+  --primary-foreground: 211 100% 99%;
+  --secondary: 206 65% 45%;  /* #3498db - lighter for dark mode */
+  --secondary-foreground: 0 0% 98%;
+  --accent: 39 89% 61%;  /* #f7dc6f - lighter for dark mode */
+  --accent-foreground: 0 0% 98%;
+  --destructive: 0 62.8% 30.6%;
+  --destructive-foreground: 0 0% 98%;
+  --ring: 240 4.9% 83.9%;
+  --radius: 0.5rem;
+  --success: 142 69% 48%;  /* #2ecc71 - lighter for dark mode */
+  --error: 6 78% 67%;  /* #e78a84 - lighter for dark mode */
+  --warning: 39 89% 61%;  /* #f7dc6f - lighter for dark mode */
+  --info: 204 70% 63%;  /* #66b3e3 - lighter for dark mode */
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply font-sans antialiased text-foreground;
+    background: linear-gradient(135deg, #87CEEB 0%, #ffffff 100%);
+    min-height: 100vh;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    @apply font-heading font-semibold;
+  }
+}
+
+@layer components {
+  .match-card {
+    @apply transition-all duration-300 ease-in-out transform relative overflow-hidden;
+    transform: perspective(1000px) rotateX(0deg);
+  }
+
+  
+
+  .match-card:hover {
+    transform: perspective(1000px) rotateX(5deg) translateY(-5px);
+  }
+
+  .status-badge {
+    @apply uppercase text-xs font-bold tracking-wider;
+  }
+
+  .prediction-option {
+    @apply transition-all duration-200 ease-in-out;
+  }
+
+  .prediction-option:hover:not(.selected) {
+    @apply transform -translate-y-0.5 shadow-md;
+  }
+
+  .prediction-option.selected {
+    @apply border-primary bg-primary bg-opacity-10;
+  }
+
+  .tab-active {
+    @apply border-b-2 border-accent;
+  }
+}
+
+.font-heading {
+  font-family: 'Montserrat', sans-serif;
+}
+
+.font-body {
+  font-family: 'Roboto', sans-serif;
+}

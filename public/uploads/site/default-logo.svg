@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="512px" height="512px" viewBox="0 0 512 512" version="1.1" xmlns="http://www.w3.org/2000/svg">
+    <title>ProAce Predictions Logo</title>
+    <g stroke="none" stroke-width="1" fill="none" fill-rule="evenodd">
+        <circle fill="#0369A1" cx="256" cy="256" r="256"></circle>
+        <g transform="translate(106.000000, 106.000000)">
+            <circle stroke="#FFFFFF" stroke-width="16" cx="150" cy="150" r="142"></circle>
+            <path d="M150,50 L150,250" stroke="#FFFFFF" stroke-width="16" stroke-linecap="round"></path>
+            <path d="M50,150 L250,150" stroke="#FFFFFF" stroke-width="16" stroke-linecap="round"></path>
+            <path d="M80,80 L220,220" stroke="#FFFFFF" stroke-width="12" stroke-linecap="round" stroke-dasharray="32,32"></path>
+            <path d="M80,220 L220,80" stroke="#FFFFFF" stroke-width="12" stroke-linecap="round" stroke-dasharray="32,32"></path>
+            <circle fill="#FFFFFF" cx="150" cy="150" r="30"></circle>
+        </g>
+        <path d="M256,435 C354.917,435 435,354.917 435,256 C435,157.083 354.917,77 256,77 C157.083,77 77,157.083 77,256" stroke="#FFFFFF" stroke-width="16" stroke-linecap="round" transform="translate(256.000000, 256.000000) rotate(45.000000) translate(-256.000000, -256.000000)"></path>
+    </g>
+</svg>
