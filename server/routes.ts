@@ -3,6 +3,7 @@ import express from "express";
 import { createServer, type Server } from "http";
 import path from "path";
 import fs from "fs";
+import { promises as fsPromises } from "fs";
 import { storage } from "./storage";
 import { pool } from "./db";
 import { setupAuth, comparePasswords, hashPassword } from "./auth";
@@ -1680,13 +1681,100 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Backup & Restore Routes
+  // File Manager & Backup Routes
   const { backupService } = await import("./backup-service");
   const { cleanupService } = await import("./cleanup-service");
+  const { FileManagerService } = await import("./file-manager");
   const multer = (await import("multer")).default;
   const uploadBackup = multer({ 
     dest: 'backups/temp/',
     limits: { fileSize: 1024 * 1024 * 1024 } // 1GB limit
+  });
+
+  const uploadFile = multer({
+    storage: multer.memoryStorage(),
+    limits: { fileSize: 10 * 1024 * 1024 }, // 10MB limit
+    fileFilter: (req, file, cb) => {
+      const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp'];
+      if (allowedTypes.includes(file.mimetype)) {
+        cb(null, true);
+      } else {
+        cb(new Error('Invalid file type. Only images are allowed.'));
+      }
+    }
+  });
+
+  const fileManager = new FileManagerService();
+
+  // File Manager Routes
+  
+  // Get all files
+  app.get("/api/admin/files", isAdmin, async (req, res) => {
+    try {
+      const files = await fileManager.getAllFiles();
+      res.json(files);
+    } catch (error) {
+      console.error("Error fetching files:", error);
+      res.status(500).json({ message: "Error fetching files" });
+    }
+  });
+
+  // Get file statistics
+  app.get("/api/admin/files/stats", isAdmin, async (req, res) => {
+    try {
+      const stats = await fileManager.getFileStats();
+      res.json(stats);
+    } catch (error) {
+      console.error("Error fetching file stats:", error);
+      res.status(500).json({ message: "Error fetching file stats" });
+    }
+  });
+
+  // Upload new file
+  app.post("/api/admin/files/upload", isAdmin, uploadFile.single('file'), async (req, res) => {
+    try {
+      if (!req.file) {
+        return res.status(400).json({ message: "No file uploaded" });
+      }
+
+      const category = req.body.category || 'other';
+      const filePath = await fileManager.saveUploadedFile(req.file, category);
+      
+      res.json({ 
+        message: "File uploaded successfully",
+        filePath 
+      });
+    } catch (error) {
+      console.error("Error uploading file:", error);
+      res.status(500).json({ message: "Error uploading file" });
+    }
+  });
+
+  // Delete file
+  app.delete("/api/admin/files/:filename", isAdmin, async (req, res) => {
+    try {
+      const { filename } = req.params;
+      await fileManager.deleteFile(decodeURIComponent(filename));
+      res.json({ message: "File deleted successfully" });
+    } catch (error) {
+      console.error("Error deleting file:", error);
+      res.status(500).json({ message: "Error deleting file" });
+    }
+  });
+
+  // Cleanup orphaned files
+  app.post("/api/admin/files/cleanup", isAdmin, async (req, res) => {
+    try {
+      const result = await fileManager.cleanupOrphanedFiles();
+      res.json({
+        message: "Cleanup completed",
+        deletedCount: result.deletedCount,
+        deletedFiles: result.deletedFiles
+      });
+    } catch (error) {
+      console.error("Error cleaning up files:", error);
+      res.status(500).json({ message: "Error cleaning up files" });
+    }
   });
 
   // Get all backups
@@ -1752,8 +1840,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       // Clean up uploaded file
       try {
-        const fs = await import('fs');
-        await fs.promises.unlink(req.file.path);
+        await fsPromises.unlink(req.file.path);
       } catch (cleanupError) {
         console.error('Failed to clean up temp file:', cleanupError);
       }
@@ -1765,8 +1852,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Clean up uploaded file on error
       try {
         if (req.file) {
-          const fs = await import('fs');
-          await fs.promises.unlink(req.file.path);
+          await fsPromises.unlink(req.file.path);
         }
       } catch {}
       

@@ -27,6 +27,7 @@ import ManageTournaments from "@/pages/admin/manage-tournaments";
 import AdminSupportPage from "@/pages/admin-support-page";
 import ManageContests from "@/pages/admin/manage-contests";
 import BackupRestore from "@/pages/admin/backup-restore";
+import AdminFileManager from "@/pages/admin/file-manager";
 import { ProtectedRoute } from "./lib/protected-route";
 import Navbar from "@/components/navbar";
 import Footer from "@/components/footer";
@@ -73,12 +74,13 @@ function Router() {
           <ProtectedRoute path="/admin/add-tournament" component={AdminAddTournament} adminOnly={true} />
           <ProtectedRoute path="/admin/manage-contests" component={ManageContests} adminOnly={true} />
           <ProtectedRoute path="/admin/settings" component={SiteSettings} adminOnly={true} />
+          <ProtectedRoute path="/admin/file-manager" component={AdminFileManager} adminOnly={true} />
           <ProtectedRoute path="/admin/backup-restore" component={BackupRestore} adminOnly={true} />
           <Route component={NotFound} />
         </Switch>
       </main>
       {!isEmbedRoute && <Footer />}
-      {!isEmbedRoute && <VerificationPopup />}
+      {!isEmbedRoute && <VerificationPopup isVisible={false} onClose={() => {}} username="" />}
     </>
   );
 }
