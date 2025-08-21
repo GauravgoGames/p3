@@ -217,7 +217,7 @@ const ManageTeams = () => {
   // Update team mutation
   const updateTeamMutation = useMutation({
     mutationFn: async ({ id, data }: { id: number; data: TeamFormData }) => {
-      console.log('Updating team:', id, 'with data:', data);
+      
       
       // Upload logo if a file was selected
       if (logoFile) {
@@ -317,7 +317,7 @@ const ManageTeams = () => {
   };
   
   const handleEditTeam = async (team: Team) => {
-    console.log('Editing team:', team);
+    
     setSelectedTeam(team);
     
     // Clear previous image preview and set current team image

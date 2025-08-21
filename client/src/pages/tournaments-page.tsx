@@ -42,7 +42,7 @@ function TournamentCard({ tournament }: { tournament: Tournament }) {
                     if (fallback) fallback.style.display = 'flex';
                   }}
                   onLoad={() => {
-                    console.log('Image loaded successfully:', tournament.imageUrl);
+                    
                   }}
                 />
                 <div 

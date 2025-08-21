@@ -101,7 +101,7 @@ const ForgotPassword = () => {
     
     const newErrors: {[key: string]: string} = {};
     if (!newPassword.trim()) newErrors.newPassword = 'New password is required';
-    if (newPassword.length < 6) newErrors.newPassword = 'Password must be at least 6 characters';
+    if (newPassword.length < 12) newErrors.newPassword = 'Password must be at least 12 characters';
     if (!confirmPassword.trim()) newErrors.confirmPassword = 'Please confirm your password';
     if (newPassword !== confirmPassword) newErrors.confirmPassword = "Passwords don't match";
     

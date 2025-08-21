@@ -82,7 +82,7 @@ export default function ProfileUpdatePage() {
 
   const updateProfileMutation = useMutation({
     mutationFn: async (data: ProfileBasicFields) => {
-      console.log('Updating profile with data:', data);
+      
       
       // First update basic profile info
       const profileRes = await fetch('/api/profile', {
@@ -95,7 +95,7 @@ export default function ProfileUpdatePage() {
         credentials: 'include'
       });
 
-      console.log('Profile response status:', profileRes.status);
+      
       
       if (!profileRes.ok) {
         const errorData = await profileRes.json();
@@ -105,7 +105,7 @@ export default function ProfileUpdatePage() {
 
       // If there's a new image, upload it separately
       if (imageFile) {
-        console.log('Uploading profile image');
+        
         const formData = new FormData();
         formData.append('image', imageFile);
 
@@ -123,7 +123,7 @@ export default function ProfileUpdatePage() {
       }
 
       const result = await profileRes.json();
-      console.log('Profile update successful:', result);
+      
       return result;
     },
     onSuccess: () => {
@@ -148,7 +148,7 @@ export default function ProfileUpdatePage() {
       
       // Update email separately if changed
       if (data.email !== user?.email) {
-        console.log('Updating email from', user?.email, 'to', data.email);
+        
         const emailRes = await fetch('/api/profile', {
           method: 'PATCH',
           headers: { 'Content-Type': 'application/json' },
@@ -164,7 +164,7 @@ export default function ProfileUpdatePage() {
 
       // Update security code if provided
       if (data.securityCode !== user?.securityCode) {
-        console.log('Updating security code from', user?.securityCode, 'to', data.securityCode);
+        
         const securityRes = await fetch('/api/profile', {
           method: 'PATCH',
           headers: { 'Content-Type': 'application/json' },
@@ -180,7 +180,7 @@ export default function ProfileUpdatePage() {
 
       // Update password if provided
       if (data.newPassword) {
-        console.log('Updating password');
+        
         const passwordRes = await fetch('/api/profile/change-password', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -199,7 +199,7 @@ export default function ProfileUpdatePage() {
         response = await passwordRes.json();
       }
 
-      console.log('Security settings update successful:', response);
+      
 
       return response || { message: 'Security settings updated successfully' };
     },

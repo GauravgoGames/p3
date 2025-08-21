@@ -75,7 +75,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   for (const dir of uploadDirs) {
     const fullPath = path.join(process.cwd(), dir);
     if (!fs.existsSync(fullPath)) {
-      console.log(`Creating upload directory: ${dir}`);
+      
       fs.mkdirSync(fullPath, { recursive: true });
     }
   }
@@ -284,7 +284,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         const uploadDir = path.join(process.cwd(), 'public/uploads/teams');
         
         if (!fs.existsSync(uploadDir)) {
-          console.log('Creating team logo upload directory:', uploadDir);
+          
           fs.mkdirSync(uploadDir, { recursive: true });
         }
       } catch (dirError) {
@@ -292,9 +292,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       
       const logoUrl = getPublicUrl(req.file.path);
-      console.log("Team logo uploaded successfully:", logoUrl);
-      console.log("File path:", req.file.path);
-      console.log("File details:", req.file);
+      
+      
+      
       res.json({ logoUrl });
     } catch (error) {
       console.error("Error uploading team logo:", error);
@@ -398,7 +398,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // 2. Delete all predictions for this match
       // 3. Reduce user points accordingly
       
-      console.log(`Admin deleting match ${id} - cleaning up all associated predictions and points`);
+      
       
       // First, get all predictions for this match to calculate point reductions
       const predictionsResult = await pool.query(
@@ -420,7 +420,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Now delete the match itself
       await storage.deleteMatch(id);
       
-      console.log(`Successfully deleted match ${id} and all associated predictions/points`);
+      
       res.status(204).send();
     } catch (error) {
       console.error("Error deleting match and associated data:", error);
@@ -913,7 +913,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.patch("/api/profile", isAuthenticated, async (req, res) => {
     try {
       const userId = req.user?.id;
-      console.log('Profile update request for user:', userId, 'with data:', req.body);
+      
       
       if (!userId) {
         return res.status(401).json({ message: "User not authenticated" });
@@ -928,10 +928,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return acc;
       }, {});
       
-      console.log('Filtered updates:', updates);
+      
       
       const updatedUser = await storage.updateUser(userId, updates);
-      console.log('Profile update successful for user:', userId);
+      
       res.json({ success: true, user: updatedUser });
     } catch (error) {
       console.error('Profile update error:', error);
@@ -943,7 +943,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/profile/change-password", isAuthenticated, async (req, res) => {
     try {
       const userId = req.user?.id;
-      console.log('Password change request for user:', userId);
+      
       
       if (!userId) {
         return res.status(401).json({ message: "User not authenticated" });
@@ -963,7 +963,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       const passwordValid = await comparePasswords(currentPassword, user.password);
       if (!passwordValid) {
-        console.log('Invalid current password for user:', userId);
+        
         return res.status(401).json({ message: "Current password is incorrect" });
       }
       
@@ -971,7 +971,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const hashedPassword = await hashPassword(newPassword);
       await storage.updateUser(userId, { password: hashedPassword });
       
-      console.log('Password updated successfully for user:', userId);
+      
       res.status(200).json({ success: true, message: "Password updated successfully" });
     } catch (error) {
       console.error('Password update error:', error);
@@ -1046,8 +1046,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Get the logo URL with cache-busting parameter
       const logoUrl = `${getPublicUrl(req.file.path)}?t=${timestamp}`;
       
-      console.log("Site logo uploaded successfully:", logoUrl);
-      console.log("File path:", req.file.path);
+      
+      
       
       // Update site logo setting with cache-busting URL
       await storage.updateSetting('siteLogo', logoUrl);
@@ -1068,8 +1068,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       
       const imageUrl = getPublicUrl(req.file.path);
-      console.log("Image uploaded successfully:", imageUrl);
-      console.log("File path:", req.file.path);
+      
+      
       
       res.json({ url: imageUrl });
     } catch (error) {
@@ -1157,10 +1157,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.patch("/api/tournaments/:id", isAdmin, async (req, res) => {
     try {
       const id = parseInt(req.params.id, 10);
-      console.log('Tournament update request for ID:', id, 'with data:', req.body);
+      
       
       const updatedTournament = await storage.updateTournament(id, req.body);
-      console.log('Tournament update successful for ID:', id);
+      
       
       res.json({ success: true, tournament: updatedTournament });
     } catch (error) {
@@ -1677,6 +1677,146 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error updating ticket:", error);
       res.status(500).json({ message: "Error updating ticket" });
+    }
+  });
+
+  // Backup & Restore Routes
+  const { backupService } = await import("./backup-service");
+  const { cleanupService } = await import("./cleanup-service");
+  const multer = (await import("multer")).default;
+  const uploadBackup = multer({ 
+    dest: 'backups/temp/',
+    limits: { fileSize: 1024 * 1024 * 1024 } // 1GB limit
+  });
+
+  // Get all backups
+  app.get("/api/admin/backups", isAdmin, async (req, res) => {
+    try {
+      const backups = await backupService.getBackupsList();
+      res.json(backups);
+    } catch (error) {
+      console.error("Error fetching backups:", error);
+      res.status(500).json({ message: "Error fetching backups", error: (error as Error).message });
+    }
+  });
+
+  // Create new backup
+  app.post("/api/admin/backups/create", isAdmin, async (req, res) => {
+    try {
+      const { description } = req.body;
+      
+      
+      const backup = await backupService.createBackup(description);
+      res.json(backup);
+    } catch (error) {
+      console.error("Error creating backup:", error);
+      res.status(500).json({ message: "Error creating backup", error: (error as Error).message });
+    }
+  });
+
+  // Download backup
+  app.get("/api/admin/backups/download/:filename", isAdmin, async (req, res) => {
+    try {
+      const { filename } = req.params;
+      const backups = await backupService.getBackupsList();
+      const backup = backups.find(b => b.filename === filename);
+      
+      if (!backup) {
+        return res.status(404).json({ message: "Backup not found" });
+      }
+
+      res.download(backup.path, filename);
+    } catch (error) {
+      console.error("Error downloading backup:", error);
+      res.status(500).json({ message: "Error downloading backup", error: (error as Error).message });
+    }
+  });
+
+  // Restore backup
+  app.post("/api/admin/backups/restore", isAdmin, uploadBackup.single('backup'), async (req, res) => {
+    try {
+      if (!req.file) {
+        return res.status(400).json({ message: "No backup file uploaded" });
+      }
+
+      
+      
+      
+      
+      
+      // Check if this is a JSON backup based on the filename
+      const isJsonBackup = req.file.originalname.endsWith('.json');
+      
+      
+      await backupService.restoreBackup(req.file.path);
+      
+      // Clean up uploaded file
+      try {
+        const fs = await import('fs');
+        await fs.promises.unlink(req.file.path);
+      } catch (cleanupError) {
+        console.error('Failed to clean up temp file:', cleanupError);
+      }
+      
+      res.json({ message: "Backup restored successfully" });
+    } catch (error) {
+      console.error("Error restoring backup:", error);
+      
+      // Clean up uploaded file on error
+      try {
+        if (req.file) {
+          const fs = await import('fs');
+          await fs.promises.unlink(req.file.path);
+        }
+      } catch {}
+      
+      res.status(500).json({ message: "Error restoring backup", error: (error as Error).message });
+    }
+  });
+
+  // Delete backup
+  app.delete("/api/admin/backups/:filename", isAdmin, async (req, res) => {
+    try {
+      const { filename } = req.params;
+      await backupService.deleteBackup(filename);
+      res.json({ message: "Backup deleted successfully" });
+    } catch (error) {
+      console.error("Error deleting backup:", error);
+      res.status(500).json({ message: "Error deleting backup", error: (error as Error).message });
+    }
+  });
+
+  // Cleanup orphaned files
+  app.post("/api/admin/cleanup/files", isAdmin, async (req, res) => {
+    try {
+      const result = await cleanupService.cleanupOrphanedFiles();
+      res.json({
+        message: "File cleanup completed",
+        deleted: result.deleted,
+        errors: result.errors,
+        deletedCount: result.deleted.length
+      });
+    } catch (error) {
+      console.error("Error cleaning up files:", error);
+      res.status(500).json({ message: "Error cleaning up files", error: (error as Error).message });
+    }
+  });
+
+  // Cleanup old backups  
+  app.post("/api/admin/cleanup/backups", isAdmin, async (req, res) => {
+    try {
+      const { keep = 10 } = req.body;
+      const deletedCount = await cleanupService.cleanupOldBackups(
+        path.join(process.cwd(), 'backups'),
+        keep
+      );
+      res.json({
+        message: "Backup cleanup completed",
+        deletedCount
+      });
+    } catch (error) {
+      console.error("Error cleaning up backups:", error);
+      res.status(500).json({ message: "Error cleaning up backups", error: (error as Error).message });
     }
   });
 

@@ -135,8 +135,8 @@ export const sessionConfig = {
 
 // Password strength validation
 export const validatePasswordStrength = (password: string): { valid: boolean; message?: string } => {
-  if (password.length < 8) {
-    return { valid: false, message: 'Password must be at least 8 characters long' };
+  if (password.length < 12) {
+    return { valid: false, message: 'Password must be at least 12 characters long' };
   }
   
   if (!/[A-Z]/.test(password)) {

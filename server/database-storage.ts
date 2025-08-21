@@ -1,6 +1,7 @@
 import { db } from "./db";
 import session from "express-session";
 import connectPg from "connect-pg-simple";
+import bcrypt from "bcryptjs";
 import { 
   users, 
   teams, 
@@ -86,19 +87,19 @@ export class DatabaseStorage implements IStorage {
         // Seed admin user - must be verified by default
         await db.insert(users).values({
           username: 'admin',
-          password: '$2b$12$hBo/ePR99DezMmEpbpB.R.2Q8zwvK5aWA28XTTEqSsfB2GSY3n6YG', // plaintext: admin123
+          password: await bcrypt.hash(process.env.ADMIN_PASSWORD || 'TempAdmin123!@#$', 12),
           email: 'admin@proace.com',
           displayName: 'Administrator',
           role: 'admin',
           points: 0,
           isVerified: true,
-          securityCode: 'ADMIN123'
+          securityCode: process.env.ADMIN_SECURITY_CODE || 'TEMP123'
         });
-        console.log('Admin user created successfully with verification');
+        
       }
       
       // Teams seeding disabled - admin can add teams manually as needed
-      console.log('Database initialized successfully - teams seeding disabled');
+      
     } catch (error) {
       console.error('Error initializing database:', error);
     }

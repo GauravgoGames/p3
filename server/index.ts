@@ -10,9 +10,24 @@ import path from "path";
 
 const app = express();
 
-// Security middleware - stable configuration
+// Production-ready security middleware
 app.use(helmet({
-  contentSecurityPolicy: false,
+  contentSecurityPolicy: {
+    directives: {
+      defaultSrc: ["'self'"],
+      styleSrc: ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com"],
+      fontSrc: ["'self'", "https://fonts.gstatic.com"],
+      imgSrc: ["'self'", "data:", "https:", "blob:"],
+      scriptSrc: ["'self'", "'unsafe-inline'"],
+      frameSrc: ["'self'"],
+      connectSrc: ["'self'", "https:"],
+      mediaSrc: ["'self'"],
+      objectSrc: ["'none'"],
+      baseUri: ["'self'"],
+      formAction: ["'self'"],
+      frameAncestors: ["'self'"],
+    },
+  },
   crossOriginEmbedderPolicy: false,
 }));
 
@@ -29,26 +44,32 @@ app.use((req: Request, res: Response, next: NextFunction) => {
   next();
 });
 
-// Optimized CORS configuration for performance
+// Production CORS configuration
 const corsOptions = {
-  origin: true, // Allow all origins for better performance in development/production
+  origin: process.env.NODE_ENV === 'production' 
+    ? process.env.ALLOWED_ORIGINS?.split(',') || false
+    : true,
   credentials: true,
   optionsSuccessStatus: 200,
-  maxAge: 86400, // Cache preflight requests for 24 hours
+  maxAge: 86400,
   preflightContinue: false,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With']
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'X-CSRF-Token']
 };
 app.use(cors(corsOptions));
 
-// Optimized rate limiting for better performance
+// Production rate limiting
 const generalLimiter = rateLimit({
-  windowMs: 5 * 60 * 1000, // 5 minutes for faster reset
-  max: 2000, // More generous limit for better user experience
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: process.env.NODE_ENV === 'production' ? 1000 : 2000,
   message: 'Too many requests from this IP, please try again later.',
   standardHeaders: true,
   legacyHeaders: false,
-  skip: (req) => req.method === 'GET' && req.path.startsWith('/api/settings'), // Skip rate limiting for settings
+  skip: (req) => req.method === 'GET' && (
+    req.path.startsWith('/api/settings') || 
+    req.path.startsWith('/embed/') ||
+    req.path.startsWith('/uploads/')
+  ),
 });
 
 const authLimiter = rateLimit({
@@ -118,7 +139,7 @@ const validateURLParams = (req: Request, res: Response, next: NextFunction) => {
   
   // Debug log to see exactly what we're getting
   if (originalUrl.includes('%%')) {
-    console.log('Suspicious URL detected:', originalUrl);
+    
   }
   
   // Block double-encoded null bytes and dangerous patterns (including %% which becomes % after first decode)

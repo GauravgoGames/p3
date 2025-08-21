@@ -18,7 +18,7 @@ const createUploadDirectories = () => {
     try {
       if (!fs.existsSync(dir)) {
         fs.mkdirSync(dir, { recursive: true, mode: 0o755 });
-        console.log(`Created directory: ${dir}`);
+        
       }
     } catch (error) {
       console.error(`Error creating directory ${dir}:`, error);
@@ -132,30 +132,15 @@ export const uploadTournamentImage = multer({
 // Helper function to get public URL from file path
 export const getPublicUrl = (filePath: string): string => {
   try {
-    // First, create a path relative to the public directory
     const publicDir = process.cwd() + '/public';
     
-    // Check if filePath contains the public directory path
     if (!filePath.includes(publicDir)) {
-      console.error('Error: File path does not contain public directory:', filePath);
-      // Return a fallback path that will still be valid
       return '/uploads/default.png';
     }
     
     const relativePath = filePath.replace(publicDir, '');
-    
-    // Log for debugging
-    console.log('Original path:', filePath);
-    console.log('Public directory:', publicDir);
-    console.log('Relative path:', relativePath);
-    
-    // Ensure path starts with a leading slash and normalize
-    const normalizedPath = relativePath.startsWith('/') ? relativePath : '/' + relativePath;
-    
-    console.log('Normalized path:', normalizedPath);
-    return normalizedPath;
+    return relativePath.startsWith('/') ? relativePath : '/' + relativePath;
   } catch (error) {
-    console.error('Error generating public URL:', error);
     return '/uploads/default.png';
   }
 };

@@ -216,7 +216,7 @@ export class MemStorage implements IStorage {
       viewedByCount: 0
     });
     
-    console.log('Admin user created successfully');
+    // Admin user created successfully
   }
   
   private async seedTeams() {

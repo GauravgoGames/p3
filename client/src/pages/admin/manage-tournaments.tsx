@@ -53,7 +53,7 @@ export default function ManageTournaments() {
   // Upload image mutation
   const uploadImageMutation = useMutation({
     mutationFn: async (file: File) => {
-      console.log('Uploading tournament image:', file.name);
+      
       
       const formData = new FormData();
       formData.append('image', file);
@@ -64,7 +64,7 @@ export default function ManageTournaments() {
         body: formData,
       });
       
-      console.log('Image upload response status:', response.status);
+      
       
       if (!response.ok) {
         const errorData = await response.json();
@@ -73,7 +73,7 @@ export default function ManageTournaments() {
       }
       
       const result = await response.json();
-      console.log('Image upload successful:', result);
+      
       return result;
     },
   });
@@ -81,7 +81,7 @@ export default function ManageTournaments() {
   // Create tournament mutation
   const createTournamentMutation = useMutation({
     mutationFn: async (data: TournamentFormData) => {
-      console.log('Creating tournament with data:', data);
+      
       
       const response = await fetch('/api/tournaments', {
         method: 'POST',
@@ -90,7 +90,7 @@ export default function ManageTournaments() {
         body: JSON.stringify(data),
       });
       
-      console.log('Tournament creation response status:', response.status);
+      
       
       if (!response.ok) {
         const errorData = await response.json();
@@ -121,7 +121,7 @@ export default function ManageTournaments() {
   // Update tournament mutation
   const updateTournamentMutation = useMutation({
     mutationFn: async ({ id, data }: { id: number; data: TournamentFormData }) => {
-      console.log('Updating tournament:', id, 'with data:', data);
+      
       
       const response = await fetch(`/api/tournaments/${id}`, {
         method: 'PATCH',
@@ -130,7 +130,7 @@ export default function ManageTournaments() {
         credentials: 'include'
       });
       
-      console.log('Tournament update response status:', response.status);
+      
       
       if (!response.ok) {
         const errorData = await response.json();
@@ -139,7 +139,7 @@ export default function ManageTournaments() {
       }
       
       const result = await response.json();
-      console.log('Tournament update successful:', result);
+      
       return result;
     },
     onSuccess: () => {
@@ -199,13 +199,13 @@ export default function ManageTournaments() {
 
   const handleImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    console.log('Image file selected:', file?.name, file?.size);
+    
     if (file) {
       setImageFile(file);
       const reader = new FileReader();
       reader.onload = (e) => {
         const result = e.target?.result as string;
-        console.log('Image preview set:', result?.substring(0, 50) + '...');
+        
         setImagePreview(result);
       };
       reader.readAsDataURL(file);
@@ -226,7 +226,7 @@ export default function ManageTournaments() {
   };
 
   const handleEdit = (tournament: Tournament) => {
-    console.log('Editing tournament:', tournament);
+    
     setEditingTournament(tournament);
     setFormData({
       name: tournament.name,
@@ -238,7 +238,7 @@ export default function ManageTournaments() {
     });
     setImagePreview(tournament.imageUrl || '');
     setImageFile(null); // Clear any previous file selection
-    console.log('Edit form state set:', { tournament, formData });
+    
   };
 
   const handleDelete = (tournament: Tournament) => {
@@ -248,17 +248,17 @@ export default function ManageTournaments() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    console.log('Form submitted!', { editingTournament, formData, imageFile });
+    
     
     try {
       let imageUrl = formData.imageUrl;
       
       // Upload image if a file was selected
       if (imageFile) {
-        console.log('Uploading image file:', imageFile.name);
+        
         try {
           const uploadResult = await uploadImageMutation.mutateAsync(imageFile);
-          console.log('Image upload successful:', uploadResult);
+          
           imageUrl = uploadResult.url;
         } catch (error) {
           console.error('Image upload failed:', error);
@@ -278,13 +278,13 @@ export default function ManageTournaments() {
         startDate: formData.startDate ? new Date(formData.startDate).toISOString() : null,
         endDate: formData.endDate ? new Date(formData.endDate).toISOString() : null
       };
-      console.log('Tournament data to submit:', tournamentData);
+      
       
       if (editingTournament) {
-        console.log('Updating tournament with ID:', editingTournament.id);
+        
         updateTournamentMutation.mutate({ id: editingTournament.id, data: tournamentData });
       } else {
-        console.log('Creating new tournament');
+        
         createTournamentMutation.mutate(tournamentData);
       }
     } catch (error) {
@@ -566,7 +566,7 @@ export default function ManageTournaments() {
                 disabled={isLoading_form || !formData.name.trim()} 
                 className="flex-1"
                 onClick={(e) => {
-                  console.log('Submit button clicked!', e);
+                  
                 }}
               >
                 {isLoading_form ? 'Saving...' : (editingTournament ? 'Update Tournament' : 'Create Tournament')}
