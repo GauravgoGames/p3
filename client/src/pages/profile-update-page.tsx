@@ -82,33 +82,49 @@ export default function ProfileUpdatePage() {
 
   const updateProfileMutation = useMutation({
     mutationFn: async (data: ProfileBasicFields) => {
+      console.log('Updating profile with data:', data);
+      
       // First update basic profile info
       const profileRes = await fetch('/api/profile', {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ displayName: data.displayName }),
+        body: JSON.stringify({ 
+          displayName: data.displayName,
+          proaceDisqusId: data.proaceDisqusId 
+        }),
+        credentials: 'include'
       });
 
+      console.log('Profile response status:', profileRes.status);
+      
       if (!profileRes.ok) {
-        throw new Error('Failed to update profile');
+        const errorData = await profileRes.json();
+        console.error('Profile update error:', errorData);
+        throw new Error(errorData.message || 'Failed to update profile');
       }
 
       // If there's a new image, upload it separately
       if (imageFile) {
+        console.log('Uploading profile image');
         const formData = new FormData();
         formData.append('image', imageFile);
 
         const imageRes = await fetch('/api/profile/upload-image', {
           method: 'POST',
           body: formData,
+          credentials: 'include'
         });
 
         if (!imageRes.ok) {
-          throw new Error('Failed to upload profile image');
+          const imageErrorData = await imageRes.json();
+          console.error('Image upload error:', imageErrorData);
+          throw new Error(imageErrorData.message || 'Failed to upload profile image');
         }
       }
 
-      return profileRes.json();
+      const result = await profileRes.json();
+      console.log('Profile update successful:', result);
+      return result;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/user'] });
@@ -132,32 +148,39 @@ export default function ProfileUpdatePage() {
       
       // Update email separately if changed
       if (data.email !== user?.email) {
+        console.log('Updating email from', user?.email, 'to', data.email);
         const emailRes = await fetch('/api/profile', {
           method: 'PATCH',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ email: data.email }),
+          credentials: 'include'
         });
         if (!emailRes.ok) {
           const errorData = await emailRes.json();
+          console.error('Email update error:', errorData);
           throw new Error(errorData.message || 'Failed to update email');
         }
       }
 
       // Update security code if provided
       if (data.securityCode !== user?.securityCode) {
+        console.log('Updating security code from', user?.securityCode, 'to', data.securityCode);
         const securityRes = await fetch('/api/profile', {
           method: 'PATCH',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ securityCode: data.securityCode }),
+          credentials: 'include'
         });
         if (!securityRes.ok) {
           const errorData = await securityRes.json();
+          console.error('Security code update error:', errorData);
           throw new Error(errorData.message || 'Failed to update security code');
         }
       }
 
       // Update password if provided
       if (data.newPassword) {
+        console.log('Updating password');
         const passwordRes = await fetch('/api/profile/change-password', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -165,14 +188,18 @@ export default function ProfileUpdatePage() {
             currentPassword: data.currentPassword,
             newPassword: data.newPassword,
           }),
+          credentials: 'include'
         });
         
         if (!passwordRes.ok) {
           const errorData = await passwordRes.json();
+          console.error('Password update error:', errorData);
           throw new Error(errorData.message || 'Failed to update password');
         }
         response = await passwordRes.json();
       }
+
+      console.log('Security settings update successful:', response);
 
       return response || { message: 'Security settings updated successfully' };
     },

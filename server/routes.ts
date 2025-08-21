@@ -91,6 +91,39 @@ export async function registerRoutes(app: Express): Promise<Server> {
       environment: process.env.NODE_ENV || "development"
     });
   });
+
+  // Visitor counter endpoints with caching
+  app.get("/api/visitor-count", async (req, res) => {
+    try {
+      // Add cache headers for better performance
+      res.set('Cache-Control', 'public, max-age=30'); // Cache for 30 seconds
+      const result = await pool.query('SELECT count FROM visitor_counter ORDER BY id DESC LIMIT 1');
+      const count = result.rows[0]?.count || 0;
+      res.json({ count });
+    } catch (error) {
+      console.error("Error fetching visitor count:", error);
+      res.status(500).json({ message: "Error fetching visitor count" });
+    }
+  });
+
+  app.post("/api/visitor-count/increment", async (req, res) => {
+    try {
+      // Optimized increment with better error handling
+      const result = await pool.query(`
+        UPDATE visitor_counter SET 
+        count = count + 1,
+        updated_at = CURRENT_TIMESTAMP
+        WHERE id = (SELECT id FROM visitor_counter ORDER BY id DESC LIMIT 1)
+        RETURNING count
+      `);
+      
+      const count = result.rows[0]?.count || 1;
+      res.json({ count });
+    } catch (error) {
+      console.error("Error incrementing visitor count:", error);
+      res.status(500).json({ message: "Error incrementing visitor count" });
+    }
+  });
   
   // Current user endpoint
   app.get("/api/user", isAuthenticated, async (req, res) => {
@@ -880,12 +913,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.patch("/api/profile", isAuthenticated, async (req, res) => {
     try {
       const userId = req.user?.id;
+      console.log('Profile update request for user:', userId, 'with data:', req.body);
+      
       if (!userId) {
         return res.status(401).json({ message: "User not authenticated" });
       }
       
       // Validate update data
-      const allowedUpdates = ['displayName', 'email', 'securityCode'];
+      const allowedUpdates = ['displayName', 'email', 'securityCode', 'proaceDisqusId'];
       const updates = Object.keys(req.body).reduce((acc: any, key) => {
         if (allowedUpdates.includes(key)) {
           acc[key] = req.body[key];
@@ -893,11 +928,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return acc;
       }, {});
       
+      console.log('Filtered updates:', updates);
+      
       const updatedUser = await storage.updateUser(userId, updates);
-      res.json(updatedUser);
+      console.log('Profile update successful for user:', userId);
+      res.json({ success: true, user: updatedUser });
     } catch (error) {
       console.error('Profile update error:', error);
-      res.status(400).json({ message: "Failed to update profile" });
+      res.status(500).json({ message: error instanceof Error ? error.message : "Failed to update profile" });
     }
   });
   
@@ -905,6 +943,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/profile/change-password", isAuthenticated, async (req, res) => {
     try {
       const userId = req.user?.id;
+      console.log('Password change request for user:', userId);
+      
       if (!userId) {
         return res.status(401).json({ message: "User not authenticated" });
       }
@@ -923,6 +963,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       const passwordValid = await comparePasswords(currentPassword, user.password);
       if (!passwordValid) {
+        console.log('Invalid current password for user:', userId);
         return res.status(401).json({ message: "Current password is incorrect" });
       }
       
@@ -930,7 +971,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const hashedPassword = await hashPassword(newPassword);
       await storage.updateUser(userId, { password: hashedPassword });
       
-      res.status(200).json({ message: "Password updated successfully" });
+      console.log('Password updated successfully for user:', userId);
+      res.status(200).json({ success: true, message: "Password updated successfully" });
     } catch (error) {
       console.error('Password update error:', error);
       res.status(500).json({ message: error instanceof Error ? error.message : "Error changing password" });
@@ -1115,11 +1157,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.patch("/api/tournaments/:id", isAdmin, async (req, res) => {
     try {
       const id = parseInt(req.params.id, 10);
+      console.log('Tournament update request for ID:', id, 'with data:', req.body);
+      
       const updatedTournament = await storage.updateTournament(id, req.body);
-      res.json(updatedTournament);
+      console.log('Tournament update successful for ID:', id);
+      
+      res.json({ success: true, tournament: updatedTournament });
     } catch (error) {
       console.error("Error updating tournament:", error);
-      res.status(400).json({ message: "Invalid tournament data", error });
+      res.status(500).json({ message: error instanceof Error ? error.message : "Failed to update tournament" });
     }
   });
 

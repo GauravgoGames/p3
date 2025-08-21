@@ -29,27 +29,29 @@ import ManageContests from "@/pages/admin/manage-contests";
 import { ProtectedRoute } from "./lib/protected-route";
 import Navbar from "@/components/navbar";
 import Footer from "@/components/footer";
-import EmbedMatch from "@/pages/embed-match";
-import EmbedLeaderboard from "@/pages/embed-leaderboard";
+import EmbedMatch from "@/pages/embeds/EmbedMatch";
+import EmbedLeaderboard from "@/pages/embeds/EmbedLeaderboard";
+import EmbedTournaments from "@/pages/embeds/EmbedTournaments";
 import { AuthProvider } from "./hooks/use-auth";
 import VerificationPopup from "@/components/verification-popup";
 
 function Router() {
   const location = useLocation();
-  const hideNavbarRoutes = ["/auth", "/forgot-password", "/embed/match", "/embed/leaderboard"];
-  const shouldHideNavbar = hideNavbarRoutes.includes(location[0]);
+  const hideNavbarRoutes = ["/auth", "/forgot-password"];
+  const shouldHideNavbar = hideNavbarRoutes.includes(location[0]) || location[0].startsWith("/embed/");
   const isEmbedRoute = location[0].startsWith("/embed/");
 
   return (
     <>
-      {!shouldHideNavbar && <Navbar />}
-      <main className={shouldHideNavbar ? "" : "min-h-screen"}>
+      {!isEmbedRoute && !shouldHideNavbar && <Navbar />}
+      <main className={isEmbedRoute ? "" : (shouldHideNavbar ? "" : "min-h-screen")}>
         <Switch>
           <Route path="/" component={HomePage} />
           <Route path="/auth" component={AuthPage} />
           <Route path="/forgot-password" component={ForgotPassword} />
           <Route path="/embed/match" component={EmbedMatch} />
           <Route path="/embed/leaderboard" component={EmbedLeaderboard} />
+          <Route path="/embed/tournaments" component={EmbedTournaments} />
           <Route path="/predict" component={PredictNowPage} />
           <Route path="/tournaments" component={TournamentsPage} />
           <Route path="/tournaments/:id" component={TournamentDetailPage} />
@@ -74,6 +76,7 @@ function Router() {
         </Switch>
       </main>
       {!isEmbedRoute && <Footer />}
+      {!isEmbedRoute && <VerificationPopup />}
     </>
   );
 }
@@ -83,7 +86,6 @@ function App() {
     <AuthProvider>
       <ThemeProvider attribute="class" defaultTheme="light">
         <TooltipProvider>
-          <Toaster />
           <Router />
         </TooltipProvider>
       </ThemeProvider>

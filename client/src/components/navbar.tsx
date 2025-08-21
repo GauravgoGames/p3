@@ -54,14 +54,14 @@ const Navbar = () => {
   };
 
   return (
-    <nav className="bg-white shadow-md">
+    <nav className="bg-gradient-to-r from-blue-600 via-purple-600 to-green-600 shadow-md animate-gradient-x">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between h-16">
           <div className="flex">
             <div className="flex-shrink-0 flex items-center">
               <div 
                 onClick={() => window.location.href = '/'}
-                className="text-2xl font-bold font-heading text-primary flex items-center cursor-pointer"
+                className="text-2xl font-bold font-heading text-white flex items-center cursor-pointer"
               >
                 {siteLogo ? (
                   <img 
@@ -84,7 +84,7 @@ const Navbar = () => {
             <div className="relative group">
               <div 
                 onClick={() => window.location.href = '/'}
-                className={`px-3 py-2 text-sm font-medium cursor-pointer flex items-center gap-1 ${location === '/' ? 'text-primary' : 'text-neutral-800 hover:text-primary'}`}
+                className={`px-3 py-2 text-sm font-medium cursor-pointer flex items-center gap-1 ${location === '/' ? 'text-yellow-300 font-bold' : 'text-white hover:text-yellow-300'}`}
               >
                 Home
                 <ChevronDown className="h-3 w-3 opacity-60" />
@@ -116,14 +116,14 @@ const Navbar = () => {
             </div>
             <div 
               onClick={() => window.location.href = '/predict'}
-              className={`px-3 py-2 text-sm font-medium cursor-pointer ${location === '/predict' ? 'text-primary' : 'text-neutral-800 hover:text-primary'}`}
+              className={`px-3 py-2 text-sm font-medium cursor-pointer ${location === '/predict' ? 'text-yellow-300 font-bold' : 'text-white hover:text-yellow-300'}`}
             >
-              Predict Now
+              Matches
             </div>
 
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <div className={`px-3 py-2 text-sm font-medium cursor-pointer flex items-center gap-1 ${location.startsWith('/tournaments') ? 'text-primary' : 'text-neutral-800 hover:text-primary'}`}>
+                <div className={`px-3 py-2 text-sm font-medium cursor-pointer flex items-center gap-1 ${location.startsWith('/tournaments') ? 'text-yellow-300 font-bold' : 'text-white hover:text-yellow-300'}`}>
                   Tournaments
                   <ChevronDown className="h-3 w-3" />
                 </div>
@@ -139,13 +139,13 @@ const Navbar = () => {
             </DropdownMenu>
             <div 
               onClick={() => window.location.href = '/leaderboard'}
-              className={`px-3 py-2 text-sm font-medium cursor-pointer ${location === '/leaderboard' ? 'text-primary' : 'text-neutral-800 hover:text-primary'}`}
+              className={`px-3 py-2 text-sm font-medium cursor-pointer ${location === '/leaderboard' ? 'text-yellow-300 font-bold' : 'text-white hover:text-yellow-300'}`}
             >
               Leaderboard
             </div>
             <div 
               onClick={() => window.location.href = '/support'}
-              className={`px-3 py-2 text-sm font-medium cursor-pointer ${location.startsWith('/support') ? 'text-primary' : 'text-neutral-800 hover:text-primary'}`}
+              className={`px-3 py-2 text-sm font-medium cursor-pointer ${location.startsWith('/support') ? 'text-yellow-300 font-bold' : 'text-white hover:text-yellow-300'}`}
             >
               Support
             </div>
@@ -246,7 +246,7 @@ const Navbar = () => {
             <div className="-mr-2 flex md:hidden">
               <button
                 type="button"
-                className="bg-white inline-flex items-center justify-center p-2 rounded-md text-neutral-800 hover:text-primary hover:bg-neutral-100 focus:outline-none"
+                className="bg-transparent inline-flex items-center justify-center p-2 rounded-md text-white hover:text-yellow-300 hover:bg-white/10 focus:outline-none"
                 aria-expanded="false"
                 onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
               >
@@ -264,11 +264,11 @@ const Navbar = () => {
 
       {/* Mobile menu */}
       {isMobileMenuOpen && (
-        <div className="md:hidden">
+        <div className="md:hidden bg-gradient-to-r from-blue-600 via-purple-600 to-green-600">
           <div className="pt-2 pb-3 space-y-1">
             <div
               className={`block px-3 py-2 text-base font-medium cursor-pointer ${
-                location === '/' ? 'text-primary' : 'text-neutral-800 hover:bg-neutral-100'
+                location === '/' ? 'text-yellow-300 font-bold' : 'text-white hover:bg-white/10'
               }`}
               onClick={() => {
                 window.location.href = '/';
@@ -279,14 +279,14 @@ const Navbar = () => {
             </div>
             <div
               className={`block px-3 py-2 text-base font-medium cursor-pointer ${
-                location === '/predict' ? 'text-primary' : 'text-neutral-800 hover:bg-neutral-100'
+                location === '/predict' ? 'text-yellow-300 font-bold' : 'text-white hover:bg-white/10'
               }`}
               onClick={() => {
                 window.location.href = '/predict';
                 setIsMobileMenuOpen(false);
               }}
             >
-              Predict Now
+              Matches
             </div>
             <div
               className={`block px-3 py-2 text-base font-medium cursor-pointer ${

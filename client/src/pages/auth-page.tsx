@@ -42,7 +42,9 @@ const AuthPage = () => {
     password: z.string().min(6, "Password must be at least 6 characters"),
     confirmPassword: z.string(),
     displayName: z.string().optional(),
-    email: z.union([z.string().email(), z.literal('')]).optional(),
+    email: z.string().optional().refine((val) => !val || z.string().email().safeParse(val).success, {
+      message: "Invalid email address",
+    }),
     proaceUserId: z.string().optional(),
     securityCode: z.string().optional(),
   }).refine((data) => data.password === data.confirmPassword, {
@@ -326,6 +328,32 @@ const AuthPage = () => {
                   >
                     {registerMutation.isPending ? "Creating account..." : "Register"}
                   </Button>
+                  
+                  {/* Registration Status Messages */}
+                  {registerMutation.isPending && (
+                    <div className="text-center p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                      <div className="text-blue-700 text-sm">Creating your account, please wait...</div>
+                    </div>
+                  )}
+                  
+                  {registerMutation.isError && (
+                    <div className="text-center p-3 bg-red-50 border border-red-200 rounded-lg">
+                      <div className="text-red-700 text-sm">
+                        {registerMutation.error?.message || "Registration failed. Please try again."}
+                      </div>
+                    </div>
+                  )}
+                  
+                  {registerMutation.isSuccess && (
+                    <div className="text-center p-3 bg-green-50 border border-green-200 rounded-lg">
+                      <div className="text-green-700 text-sm font-medium">
+                        Registration Successful!
+                      </div>
+                      <div className="text-green-600 text-xs mt-1">
+                        Please login with your username and password.
+                      </div>
+                    </div>
+                  )}
                 </form>
               </Form>
             </TabsContent>

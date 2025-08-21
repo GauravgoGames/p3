@@ -6,37 +6,54 @@ import rateLimit from "express-rate-limit";
 import mongoSanitize from "express-mongo-sanitize";
 import hpp from "hpp";
 import cors from "cors";
+import path from "path";
 
 const app = express();
 
-// Security middleware
+// Security middleware - stable configuration
 app.use(helmet({
-  contentSecurityPolicy: false, // Disable CSP for development, can be configured properly for production
+  contentSecurityPolicy: false,
   crossOriginEmbedderPolicy: false,
 }));
 
-// CORS configuration
+// Custom middleware for iframe embedding control
+app.use((req: Request, res: Response, next: NextFunction) => {
+  // Allow iframe embedding for embed routes only  
+  if (req.path.startsWith('/embed/')) {
+    // Remove any existing X-Frame-Options header and don't set it
+    res.removeHeader('X-Frame-Options');
+  } else {
+    // Set X-Frame-Options DENY for all other routes
+    res.setHeader('X-Frame-Options', 'DENY');
+  }
+  next();
+});
+
+// Optimized CORS configuration for performance
 const corsOptions = {
-  origin: process.env.NODE_ENV === 'production' 
-    ? process.env.ALLOWED_ORIGINS?.split(',') || true
-    : true,
+  origin: true, // Allow all origins for better performance in development/production
   credentials: true,
-  optionsSuccessStatus: 200
+  optionsSuccessStatus: 200,
+  maxAge: 86400, // Cache preflight requests for 24 hours
+  preflightContinue: false,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With']
 };
 app.use(cors(corsOptions));
 
-// Rate limiting
+// Optimized rate limiting for better performance
 const generalLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 1000, // Increased to 1000 requests per windowMs for better user experience
+  windowMs: 5 * 60 * 1000, // 5 minutes for faster reset
+  max: 2000, // More generous limit for better user experience
   message: 'Too many requests from this IP, please try again later.',
   standardHeaders: true,
   legacyHeaders: false,
+  skip: (req) => req.method === 'GET' && req.path.startsWith('/api/settings'), // Skip rate limiting for settings
 });
 
 const authLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 10, // Increased to 10 login attempts per windowMs
+  windowMs: 10 * 60 * 1000, // 10 minutes
+  max: 15, // More generous login attempts
   message: 'Too many login attempts, please try again later.',
   skipSuccessfulRequests: true,
 });
@@ -129,6 +146,14 @@ app.use(hpp());
 // Body parsing middleware with size limits
 app.use(express.json({ limit: '10kb' }));
 app.use(express.urlencoded({ extended: false, limit: '10kb' }));
+
+// Optimize static file serving with caching
+app.use('/uploads', express.static(path.join(process.cwd(), 'public/uploads'), {
+  maxAge: '1d', // Cache images for 1 day
+  etag: true,
+  lastModified: true,
+  immutable: false
+}));
 
 app.use((req, res, next) => {
   const start = Date.now();

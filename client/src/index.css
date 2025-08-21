@@ -5,6 +5,24 @@
 @tailwind components;
 @tailwind utilities;
 
+/* LED-like gradient animations for sporty header and footer */
+@keyframes gradient-x {
+  0%, 100% {
+    background-size: 400% 400%;
+    background-position: 0% 50%;
+  }
+  50% {
+    background-size: 400% 400%;
+    background-position: 100% 50%;
+  }
+}
+
+.animate-gradient-x {
+  background: linear-gradient(-45deg, #ee7752, #e73c7e, #23a6d5, #23d5ab, #f093fb, #f5576c, #4facfe, #00f2fe);
+  background-size: 400% 400%;
+  animation: gradient-x 4s ease infinite;
+}
+
 :root {
   --background: 0 0% 98%;
   --foreground: 20 14.3% 4.1%;

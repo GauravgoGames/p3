@@ -214,6 +214,80 @@ const ManageTeams = () => {
     },
   });
   
+  // Update team mutation
+  const updateTeamMutation = useMutation({
+    mutationFn: async ({ id, data }: { id: number; data: TeamFormData }) => {
+      console.log('Updating team:', id, 'with data:', data);
+      
+      // Upload logo if a file was selected
+      if (logoFile) {
+        const formData = new FormData();
+        formData.append('logo', logoFile);
+        
+        const uploadRes = await fetch('/api/teams/upload-logo', {
+          method: 'POST',
+          credentials: 'include',
+          body: formData,
+        });
+        
+        if (!uploadRes.ok) {
+          throw new Error('Logo upload failed');
+        }
+        
+        const logoData = await uploadRes.json();
+        data.logoUrl = logoData.logoUrl;
+      }
+      
+      // Update team basic info
+      const response = await fetch(`/api/teams/${id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({
+          name: data.name,
+          logoUrl: data.logoUrl,
+          isCustom: data.isCustom,
+        }),
+      });
+      
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Failed to update team');
+      }
+      
+      // Update tournament associations
+      if (data.tournamentIds) {
+        await fetch(`/api/teams/${id}/tournaments`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          credentials: 'include',
+          body: JSON.stringify({ tournamentIds: data.tournamentIds }),
+        });
+      }
+      
+      return response.json();
+    },
+    onSuccess: () => {
+      toast({
+        title: 'Team Updated',
+        description: 'Team has been successfully updated',
+      });
+      queryClient.invalidateQueries({ queryKey: ['/api/teams'] });
+      setEditDialogOpen(false);
+      setSelectedTeam(null);
+      setLogoFile(null);
+      setLogoPreview(null);
+    },
+    onError: (error: Error) => {
+      console.error('Team update error:', error);
+      toast({
+        title: 'Error',
+        description: error.message || 'Failed to update team',
+        variant: 'destructive',
+      });
+    },
+  });
+
   // Delete team mutation
   const deleteTeamMutation = useMutation({
     mutationFn: async (id: number) => {
@@ -243,7 +317,12 @@ const ManageTeams = () => {
   };
   
   const handleEditTeam = async (team: Team) => {
+    console.log('Editing team:', team);
     setSelectedTeam(team);
+    
+    // Clear previous image preview and set current team image
+    setLogoFile(null);
+    setLogoPreview(team.logoUrl || null);
     
     // Fetch team's current tournament associations
     try {
@@ -496,47 +575,9 @@ const ManageTeams = () => {
           </DialogHeader>
           
           <Form {...editTeamForm}>
-            <form onSubmit={editTeamForm.handleSubmit(async (data) => {
+            <form onSubmit={editTeamForm.handleSubmit((data) => {
               if (!selectedTeam) return;
-              
-              try {
-                // Update team basic info
-                const response = await fetch(`/api/teams/${selectedTeam.id}`, {
-                  method: 'PUT',
-                  headers: { 'Content-Type': 'application/json' },
-                  body: JSON.stringify({
-                    name: data.name,
-                    logoUrl: data.logoUrl,
-                    isCustom: data.isCustom,
-                  }),
-                });
-                
-                if (!response.ok) throw new Error('Failed to update team');
-                
-                // Update tournament associations
-                if (data.tournamentIds) {
-                  await fetch(`/api/teams/${selectedTeam.id}/tournaments`, {
-                    method: 'PUT',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ tournamentIds: data.tournamentIds }),
-                  });
-                }
-                
-                toast({
-                  title: 'Team Updated',
-                  description: 'Team has been successfully updated',
-                });
-                
-                queryClient.invalidateQueries({ queryKey: ['/api/teams'] });
-                setEditDialogOpen(false);
-                setSelectedTeam(null);
-              } catch (error) {
-                toast({
-                  title: 'Error',
-                  description: 'Failed to update team',
-                  variant: 'destructive',
-                });
-              }
+              updateTeamMutation.mutate({ id: selectedTeam.id, data });
             })} className="space-y-6">
               <FormField
                 control={editTeamForm.control}

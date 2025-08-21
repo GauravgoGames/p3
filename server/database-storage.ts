@@ -97,14 +97,8 @@ export class DatabaseStorage implements IStorage {
         console.log('Admin user created successfully with verification');
       }
       
-      // Check if teams exist
-      const teamCount = await db.select({ count: teams.id }).from(teams);
-      
-      if (teamCount.length === 0 || teamCount[0].count === 0) {
-        // Seed teams
-        await this.seedTeams();
-        console.log('Teams seeded successfully');
-      }
+      // Teams seeding disabled - admin can add teams manually as needed
+      console.log('Database initialized successfully - teams seeding disabled');
     } catch (error) {
       console.error('Error initializing database:', error);
     }
@@ -321,15 +315,11 @@ export class DatabaseStorage implements IStorage {
   }
   
   async deleteTeam(id: number): Promise<void> {
-    // First check if team exists and is custom
+    // Allow deletion of any team (admin can delete all teams)
     const [team] = await db.select().from(teams).where(eq(teams.id, id));
     
     if (!team) {
       throw new Error('Team not found');
-    }
-    
-    if (!team.isCustom) {
-      throw new Error('Cannot delete pre-defined team');
     }
     
     const result = await db.delete(teams).where(eq(teams.id, id));
@@ -849,8 +839,17 @@ export class DatabaseStorage implements IStorage {
   }
 
   async updateTournament(id: number, tournamentData: Partial<Tournament>): Promise<Tournament> {
+    // Convert date strings to Date objects if they exist
+    const processedData = { ...tournamentData };
+    if (processedData.startDate && typeof processedData.startDate === 'string') {
+      processedData.startDate = new Date(processedData.startDate);
+    }
+    if (processedData.endDate && typeof processedData.endDate === 'string') {
+      processedData.endDate = new Date(processedData.endDate);
+    }
+
     const [updated] = await db.update(tournaments)
-      .set(tournamentData)
+      .set(processedData)
       .where(eq(tournaments.id, id))
       .returning();
     return updated;

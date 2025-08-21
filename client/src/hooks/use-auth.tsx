@@ -76,24 +76,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       return await res.json();
     },
     onSuccess: (user: User) => {
-      // Fix issue #2: Don't auto-login after registration
-      // Instead, notify user to login with their credentials
-      
-      // Clear the user data to prevent auto-login
+      // Don't auto-login - clear any user data to prevent auto-login
       localQueryClient.setQueryData(["/api/user"], null);
       
       toast({
-        title: "Registration successful",
-        description: "Your account has been created! Please login with your credentials.",
+        title: "Registration Successful!",
+        description: `Your account has been created successfully! Please login with your username and password to continue.`,
+        duration: 5000, // Show for 5 seconds
       });
       
-      // Redirect to login page
-      setLocation("/auth");
+      // Stay on registration/login page - don't redirect
+      // Users will manually login with their new credentials
     },
     onError: (error: Error) => {
       toast({
         title: "Registration failed",
-        description: error.message || "Username may already be taken",
+        description: error.message || "Username may already be taken. Please try a different username.",
         variant: "destructive",
       });
     },

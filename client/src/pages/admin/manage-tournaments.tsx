@@ -53,28 +53,51 @@ export default function ManageTournaments() {
   // Upload image mutation
   const uploadImageMutation = useMutation({
     mutationFn: async (file: File) => {
+      console.log('Uploading tournament image:', file.name);
+      
       const formData = new FormData();
       formData.append('image', file);
       
       const response = await fetch('/api/upload', {
         method: 'POST',
+        credentials: 'include',
         body: formData,
       });
       
-      if (!response.ok) throw new Error('Failed to upload image');
-      return response.json();
+      console.log('Image upload response status:', response.status);
+      
+      if (!response.ok) {
+        const errorData = await response.json();
+        console.error('Image upload error:', errorData);
+        throw new Error(errorData.message || 'Failed to upload image');
+      }
+      
+      const result = await response.json();
+      console.log('Image upload successful:', result);
+      return result;
     },
   });
 
   // Create tournament mutation
   const createTournamentMutation = useMutation({
     mutationFn: async (data: TournamentFormData) => {
+      console.log('Creating tournament with data:', data);
+      
       const response = await fetch('/api/tournaments', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
         body: JSON.stringify(data),
       });
-      if (!response.ok) throw new Error('Failed to create tournament');
+      
+      console.log('Tournament creation response status:', response.status);
+      
+      if (!response.ok) {
+        const errorData = await response.json();
+        console.error('Tournament creation error:', errorData);
+        throw new Error(errorData.message || 'Failed to create tournament');
+      }
+      
       return response.json();
     },
     onSuccess: () => {
@@ -98,13 +121,26 @@ export default function ManageTournaments() {
   // Update tournament mutation
   const updateTournamentMutation = useMutation({
     mutationFn: async ({ id, data }: { id: number; data: TournamentFormData }) => {
+      console.log('Updating tournament:', id, 'with data:', data);
+      
       const response = await fetch(`/api/tournaments/${id}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(data),
+        credentials: 'include'
       });
-      if (!response.ok) throw new Error('Failed to update tournament');
-      return response.json();
+      
+      console.log('Tournament update response status:', response.status);
+      
+      if (!response.ok) {
+        const errorData = await response.json();
+        console.error('Tournament update error:', errorData);
+        throw new Error(errorData.message || 'Failed to update tournament');
+      }
+      
+      const result = await response.json();
+      console.log('Tournament update successful:', result);
+      return result;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/tournaments'] });
@@ -115,10 +151,11 @@ export default function ManageTournaments() {
       setEditingTournament(null);
       resetForm();
     },
-    onError: () => {
+    onError: (error: Error) => {
+      console.error('Tournament update mutation error:', error);
       toast({
         title: "Error",
-        description: "Failed to update tournament. Please try again.",
+        description: error.message || "Failed to update tournament. Please try again.",
         variant: "destructive",
       });
     },
@@ -162,11 +199,14 @@ export default function ManageTournaments() {
 
   const handleImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
+    console.log('Image file selected:', file?.name, file?.size);
     if (file) {
       setImageFile(file);
       const reader = new FileReader();
       reader.onload = (e) => {
-        setImagePreview(e.target?.result as string);
+        const result = e.target?.result as string;
+        console.log('Image preview set:', result?.substring(0, 50) + '...');
+        setImagePreview(result);
       };
       reader.readAsDataURL(file);
     }
@@ -186,6 +226,7 @@ export default function ManageTournaments() {
   };
 
   const handleEdit = (tournament: Tournament) => {
+    console.log('Editing tournament:', tournament);
     setEditingTournament(tournament);
     setFormData({
       name: tournament.name,
@@ -196,6 +237,8 @@ export default function ManageTournaments() {
       isContest: tournament.isContest || false,
     });
     setImagePreview(tournament.imageUrl || '');
+    setImageFile(null); // Clear any previous file selection
+    console.log('Edit form state set:', { tournament, formData });
   };
 
   const handleDelete = (tournament: Tournament) => {
@@ -205,30 +248,52 @@ export default function ManageTournaments() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    console.log('Form submitted!', { editingTournament, formData, imageFile });
     
-    let imageUrl = formData.imageUrl;
-    
-    // Upload image if a file was selected
-    if (imageFile) {
-      try {
-        const uploadResult = await uploadImageMutation.mutateAsync(imageFile);
-        imageUrl = uploadResult.url;
-      } catch (error) {
-        toast({
-          title: "Error",
-          description: "Failed to upload image. Please try again.",
-          variant: "destructive",
-        });
-        return;
+    try {
+      let imageUrl = formData.imageUrl;
+      
+      // Upload image if a file was selected
+      if (imageFile) {
+        console.log('Uploading image file:', imageFile.name);
+        try {
+          const uploadResult = await uploadImageMutation.mutateAsync(imageFile);
+          console.log('Image upload successful:', uploadResult);
+          imageUrl = uploadResult.url;
+        } catch (error) {
+          console.error('Image upload failed:', error);
+          toast({
+            title: "Error",
+            description: "Failed to upload image. Please try again.",
+            variant: "destructive",
+          });
+          return;
+        }
       }
-    }
-    
-    const tournamentData = { ...formData, imageUrl };
-    
-    if (editingTournament) {
-      updateTournamentMutation.mutate({ id: editingTournament.id, data: tournamentData });
-    } else {
-      createTournamentMutation.mutate(tournamentData);
+      
+      // Convert date strings to proper format for backend
+      const tournamentData = { 
+        ...formData, 
+        imageUrl,
+        startDate: formData.startDate ? new Date(formData.startDate).toISOString() : null,
+        endDate: formData.endDate ? new Date(formData.endDate).toISOString() : null
+      };
+      console.log('Tournament data to submit:', tournamentData);
+      
+      if (editingTournament) {
+        console.log('Updating tournament with ID:', editingTournament.id);
+        updateTournamentMutation.mutate({ id: editingTournament.id, data: tournamentData });
+      } else {
+        console.log('Creating new tournament');
+        createTournamentMutation.mutate(tournamentData);
+      }
+    } catch (error) {
+      console.error('Form submission error:', error);
+      toast({
+        title: "Error",
+        description: "An unexpected error occurred. Please try again.",
+        variant: "destructive",
+      });
     }
   };
 
@@ -496,7 +561,14 @@ export default function ManageTournaments() {
 
             {/* Submit Button */}
             <div className="flex gap-4">
-              <Button type="submit" disabled={isLoading_form || !formData.name.trim()} className="flex-1">
+              <Button 
+                type="submit" 
+                disabled={isLoading_form || !formData.name.trim()} 
+                className="flex-1"
+                onClick={(e) => {
+                  console.log('Submit button clicked!', e);
+                }}
+              >
                 {isLoading_form ? 'Saving...' : (editingTournament ? 'Update Tournament' : 'Create Tournament')}
               </Button>
               

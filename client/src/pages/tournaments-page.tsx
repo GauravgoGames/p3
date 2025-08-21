@@ -28,11 +28,33 @@ function TournamentCard({ tournament }: { tournament: Tournament }) {
         <Card className="overflow-hidden hover:shadow-lg transition-all duration-300 cursor-pointer group">
           <div className="relative">
             {tournament.imageUrl ? (
-              <img 
-                src={tournament.imageUrl} 
-                alt={tournament.name}
-                className="w-full h-48 object-cover group-hover:scale-105 transition-transform duration-300"
-              />
+              <div className="relative w-full h-48 overflow-hidden">
+                <img 
+                  src={tournament.imageUrl} 
+                  alt={tournament.name}
+                  className="w-full h-48 object-cover group-hover:scale-105 transition-transform duration-300"
+                  onError={(e) => {
+                    console.error('Image failed to load:', tournament.imageUrl);
+                    const target = e.target as HTMLImageElement;
+                    target.style.display = 'none';
+                    // Show fallback immediately
+                    const fallback = target.nextElementSibling as HTMLElement;
+                    if (fallback) fallback.style.display = 'flex';
+                  }}
+                  onLoad={() => {
+                    console.log('Image loaded successfully:', tournament.imageUrl);
+                  }}
+                />
+                <div 
+                  className="absolute inset-0 w-full h-48 bg-gradient-to-br from-blue-100 to-blue-200 flex items-center justify-center"
+                  style={{ display: 'none' }}
+                >
+                  <div className="text-center">
+                    <Trophy className="h-16 w-16 text-blue-500 mx-auto mb-2" />
+                    <p className="text-sm text-gray-600">Image not found</p>
+                  </div>
+                </div>
+              </div>
             ) : (
               <div className="w-full h-48 bg-gradient-to-br from-blue-100 to-blue-200 flex items-center justify-center">
                 <Trophy className="h-16 w-16 text-blue-500" />
